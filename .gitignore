@@ -39,3 +39,13 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Internal documentation
+agents.md
+AGENTS.md
+design.md
+phases.md
+CLAUDE.md
+!README.md
+
+expense-tracker (3).html
