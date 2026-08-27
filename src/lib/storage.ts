@@ -7,32 +7,11 @@ const STORAGE_KEYS = {
   THEME: '@ledger_theme',
 };
 
-const getDemoExpenses = (): Expense[] => {
-  const d = (daysAgo: number) => {
-    const date = new Date();
-    date.setDate(date.getDate() - daysAgo);
-    return date.toISOString().slice(0, 10);
-  };
-
-  return [
-    { id: '1', amount: 320, category: 'food', date: d(0), paymentMethod: 'UPI', note: 'Lunch with team' },
-    { id: '2', amount: 150, category: 'transport', date: d(0), paymentMethod: 'Cash', note: 'Auto rickshaw' },
-    { id: '3', amount: 2400, category: 'shopping', date: d(1), paymentMethod: 'Card', note: 'Weekend groceries & shirt' },
-    { id: '4', amount: 899, category: 'bills', date: d(2), paymentMethod: 'UPI', note: 'WiFi broadband' },
-    { id: '5', amount: 450, category: 'entertainment', date: d(3), paymentMethod: 'Wallet', note: 'Cinema tickets' },
-    { id: '6', amount: 550, category: 'health', date: d(5), paymentMethod: 'UPI', note: 'Pharmacy vitamins' },
-    { id: '7', amount: 1200, category: 'groceries', date: d(6), paymentMethod: 'Card', note: 'Weekly veggies' },
-  ];
-};
-
 export const storage = {
   async loadExpenses(): Promise<Expense[]> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.EXPENSES);
-      if (data) return JSON.parse(data);
-      const initial = getDemoExpenses();
-      await AsyncStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify(initial));
-      return initial;
+      return data ? JSON.parse(data) : [];
     } catch {
       return [];
     }
@@ -49,7 +28,7 @@ export const storage = {
   async loadBudgets(): Promise<Budget> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.BUDGETS);
-      return data ? JSON.parse(data) : { overall: 15000, categories: { food: 5000, transport: 2000, shopping: 4000 } };
+      return data ? JSON.parse(data) : { overall: 0, categories: {} };
     } catch {
       return { overall: 0, categories: {} };
     }

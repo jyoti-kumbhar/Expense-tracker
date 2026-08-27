@@ -25,7 +25,7 @@ const ExpenseContext = createContext<ExpenseContextType | undefined>(undefined);
 export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const systemScheme = useColorScheme();
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [budgets, setBudgets] = useState<Budget>({ overall: 15000, categories: {} });
+  const [budgets, setBudgets] = useState<Budget>({ overall: 0, categories: {} });
   const [isDark, setIsDark] = useState<boolean>(systemScheme === 'dark');
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [loading, setLoading] = useState(true);

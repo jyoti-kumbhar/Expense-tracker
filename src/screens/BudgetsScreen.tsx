@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Button } from '../components/Button';
@@ -19,6 +19,15 @@ export const BudgetsScreen: React.FC = () => {
     });
     return init;
   });
+
+  useEffect(() => {
+    setOverallInput(budgets.overall ? String(budgets.overall) : '');
+    const init: Record<string, string> = {};
+    Object.entries(budgets.categories || {}).forEach(([catId, val]) => {
+      if (val) init[catId] = String(val);
+    });
+    setCategoryInputs(init);
+  }, [budgets]);
 
   const monthTotal = calculateMonthTotal(expenses);
   const categoryTotals = calculateCategoryTotals(expenses);
