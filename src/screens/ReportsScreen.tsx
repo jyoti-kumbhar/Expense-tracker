@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Card } from '../components/Card';
 import { CategoryBreakdown } from '../components/CategoryBreakdown';
@@ -7,18 +7,25 @@ import { COLORS, RADIUS } from '../constants/theme';
 import { useExpenses } from '../hooks/useExpenses';
 import {
   calculateCategoryTotals,
+  calculateMonthlyTotals,
   calculateMonthTotal,
   calculateYearlyTotals,
   formatCurrency,
 } from '../lib/reports';
 
-export const ReportsScreen: React.FC = () => {
+interface ReportsScreenProps {
+  onViewMonthHistory?: (month: string) => void;
+}
+
+export const ReportsScreen: React.FC<ReportsScreenProps> = ({ onViewMonthHistory }) => {
   const { expenses, isDark } = useExpenses();
   const theme = isDark ? COLORS.dark : COLORS.light;
 
   const monthTotal = calculateMonthTotal(expenses);
   const categoryTotals = calculateCategoryTotals(expenses);
+  const monthlyData = calculateMonthlyTotals(expenses);
   const yearlyData = calculateYearlyTotals(expenses);
+  const maxMonthTotal = Math.max(...monthlyData.map(m => m.total), 1);
   const maxYearTotal = Math.max(...yearlyData.map(y => y.total), 1);
 
   return (
@@ -35,6 +42,76 @@ export const ReportsScreen: React.FC = () => {
       </View>
       <Card>
         <CategoryBreakdown categoryTotals={categoryTotals} totalSpent={monthTotal} />
+      </Card>
+
+      {/* Expenses By Month */}
+      <View style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, { color: theme.muted }]}>Spending By Month</Text>
+      </View>
+      <Card>
+        {monthlyData.length === 0 ? (
+          <View style={styles.empty}>
+            <Text style={[styles.emptyText, { color: theme.muted }]}>No expense data available</Text>
+          </View>
+        ) : (
+          monthlyData.map((item, index) => {
+            const percent = (item.total / maxMonthTotal) * 100;
+            const isLast = index === monthlyData.length - 1;
+
+            return (
+              <View
+                key={item.month}
+                style={[
+                  styles.itemRow,
+                  !isLast && { borderBottomWidth: 1, borderBottomColor: theme.border },
+                ]}
+              >
+                <View style={styles.itemHead}>
+                  <View style={styles.itemBadge}>
+                    <Feather name="calendar" size={14} color={theme.primary} />
+                    <Text style={[styles.itemText, { color: theme.text }]}>{item.monthLabel}</Text>
+                  </View>
+                  <Text style={[styles.itemAmount, { color: theme.text }]}>
+                    {formatCurrency(item.total)}
+                  </Text>
+                </View>
+
+                {/* Proportional visual bar */}
+                <View style={[styles.barTrack, { backgroundColor: theme.barTrack }]}>
+                  <View
+                    style={[
+                      styles.barFill,
+                      { width: `${percent}%`, backgroundColor: theme.primary },
+                    ]}
+                  />
+                </View>
+
+                <View style={styles.itemFooter}>
+                  <Text style={[styles.itemMeta, { color: theme.muted }]}>
+                    {item.count} {item.count === 1 ? 'entry' : 'entries'}
+                  </Text>
+                  {onViewMonthHistory && (
+                    <TouchableOpacity
+                      style={[
+                        styles.viewBtn,
+                        {
+                          backgroundColor: isDark
+                            ? 'rgba(127, 76, 165, 0.25)'
+                            : 'rgba(75, 28, 113, 0.08)',
+                        },
+                      ]}
+                      onPress={() => onViewMonthHistory(item.month)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.viewBtnText, { color: theme.primary }]}>View History</Text>
+                      <Feather name="arrow-right" size={12} color={theme.primary} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            );
+          })
+        )}
       </Card>
 
       {/* Expenses By Year */}
@@ -55,16 +132,16 @@ export const ReportsScreen: React.FC = () => {
               <View
                 key={item.year}
                 style={[
-                  styles.yearRow,
+                  styles.itemRow,
                   !isLast && { borderBottomWidth: 1, borderBottomColor: theme.border },
                 ]}
               >
-                <View style={styles.yearHead}>
-                  <View style={styles.yearBadge}>
+                <View style={styles.itemHead}>
+                  <View style={styles.itemBadge}>
                     <Feather name="calendar" size={14} color={theme.primary} />
-                    <Text style={[styles.yearText, { color: theme.text }]}>{item.year}</Text>
+                    <Text style={[styles.itemText, { color: theme.text }]}>{item.year}</Text>
                   </View>
-                  <Text style={[styles.yearAmount, { color: theme.text }]}>
+                  <Text style={[styles.itemAmount, { color: theme.text }]}>
                     {formatCurrency(item.total)}
                   </Text>
                 </View>
@@ -79,7 +156,7 @@ export const ReportsScreen: React.FC = () => {
                   />
                 </View>
 
-                <Text style={[styles.yearMeta, { color: theme.muted }]}>
+                <Text style={[styles.itemMeta, { color: theme.muted }]}>
                   {item.count} {item.count === 1 ? 'entry' : 'entries'}
                 </Text>
               </View>
@@ -106,7 +183,7 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     marginBottom: 8,
-    marginTop: 10,
+    marginTop: 12,
   },
   sectionTitle: {
     fontSize: 12,
@@ -114,26 +191,26 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
-  yearRow: {
+  itemRow: {
     paddingVertical: 12,
     gap: 6,
   },
-  yearHead: {
+  itemHead: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  yearBadge: {
+  itemBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  yearText: {
-    fontSize: 16,
+  itemText: {
+    fontSize: 15,
     fontWeight: '700',
   },
-  yearAmount: {
-    fontSize: 16,
+  itemAmount: {
+    fontSize: 15,
     fontWeight: '700',
     fontFamily: 'serif',
   },
@@ -146,8 +223,26 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: RADIUS.pill,
   },
-  yearMeta: {
+  itemFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  itemMeta: {
     fontSize: 12,
+  },
+  viewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: RADIUS.pill,
+  },
+  viewBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   empty: {
     paddingVertical: 20,

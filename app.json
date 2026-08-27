@@ -26,6 +26,31 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "LedgerSummaryWidget",
+              "label": "Ledger Monthly Spending",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2
+            },
+            {
+              "name": "LedgerQuickAddWidget",
+              "label": "Ledger Quick Entry",
+              "minWidth": "120dp",
+              "minHeight": "100dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2
+            }
+          ]
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "8d51efe7-c317-4e7f-9b5e-26aede2fae9d"

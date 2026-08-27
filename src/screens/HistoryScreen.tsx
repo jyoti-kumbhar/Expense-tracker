@@ -5,13 +5,20 @@ import { Card } from '../components/Card';
 import { ExpenseItem } from '../components/ExpenseItem';
 import { CATEGORIES, COLORS, RADIUS } from '../constants/theme';
 import { useExpenses } from '../hooks/useExpenses';
+import { formatMonthLabel } from '../lib/reports';
 import { Expense } from '../types';
 
 interface HistoryScreenProps {
   onEditExpense: (expense: Expense) => void;
+  selectedMonth?: string | null;
+  onClearMonthFilter?: () => void;
 }
 
-export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onEditExpense }) => {
+export const HistoryScreen: React.FC<HistoryScreenProps> = ({
+  onEditExpense,
+  selectedMonth,
+  onClearMonthFilter,
+}) => {
   const { expenses, isDark } = useExpenses();
   const theme = isDark ? COLORS.dark : COLORS.light;
 
@@ -21,6 +28,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onEditExpense }) =
   const filteredExpenses = useMemo(() => {
     return expenses
       .filter(expense => {
+        const matchesMonth = !selectedMonth || expense.date?.startsWith(selectedMonth);
         const matchesCategory =
           selectedCategory === 'all' || expense.category === selectedCategory;
         const matchesSearch =
@@ -30,15 +38,50 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onEditExpense }) =
           expense.paymentMethod.toLowerCase().includes(searchQuery.toLowerCase()) ||
           String(expense.amount).includes(searchQuery);
 
-        return matchesCategory && matchesSearch;
+        return matchesMonth && matchesCategory && matchesSearch;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [expenses, selectedCategory, searchQuery]);
+  }, [expenses, selectedCategory, searchQuery, selectedMonth]);
 
   return (
     <View style={styles.container}>
       <View style={styles.headerArea}>
         <Text style={[styles.title, { color: theme.text }]}>All Expenses</Text>
+
+        {/* Active Month Filter Banner */}
+        {selectedMonth && (
+          <View
+            style={[
+              styles.monthBanner,
+              {
+                backgroundColor: isDark
+                  ? 'rgba(127, 76, 165, 0.25)'
+                  : 'rgba(75, 28, 113, 0.08)',
+                borderColor: theme.border,
+              },
+            ]}
+          >
+            <View style={styles.monthBannerLeft}>
+              <Feather name="calendar" size={14} color={theme.primary} />
+              <Text style={[styles.monthBannerText, { color: theme.text }]}>
+                Month:{' '}
+                <Text style={{ fontWeight: '700', color: theme.primary }}>
+                  {formatMonthLabel(selectedMonth)}
+                </Text>
+              </Text>
+            </View>
+            {onClearMonthFilter && (
+              <TouchableOpacity
+                onPress={onClearMonthFilter}
+                style={styles.clearMonthBtn}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                activeOpacity={0.7}
+              >
+                <Feather name="x" size={16} color={theme.primary} />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
 
         {/* Search Bar */}
         <View
@@ -126,8 +169,8 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onEditExpense }) =
               <Feather name="inbox" size={32} color={theme.muted} style={styles.emptyIcon} />
               <Text style={[styles.emptyTitle, { color: theme.text }]}>No expenses found</Text>
               <Text style={[styles.emptySubtitle, { color: theme.muted }]}>
-                {searchQuery || selectedCategory !== 'all'
-                  ? 'Try changing your search or category filter'
+                {searchQuery || selectedCategory !== 'all' || selectedMonth
+                  ? 'Try changing your search or category/month filter'
                   : 'Add your first expense to get started'}
               </Text>
             </View>
@@ -159,6 +202,27 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 12,
+  },
+  monthBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 10,
+  },
+  monthBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  monthBannerText: {
+    fontSize: 13,
+  },
+  clearMonthBtn: {
+    padding: 2,
   },
   searchBar: {
     flexDirection: 'row',

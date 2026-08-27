@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
 import { storage } from '../lib/storage';
+import { syncHomeWidget } from '../lib/widgetSync';
 import { Budget, Expense } from '../types';
 
 interface ExpenseContextType {
@@ -44,6 +45,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setIsDark(storedTheme === 'dark');
       }
       setLoading(false);
+      syncHomeWidget();
     })();
   }, []);
 
@@ -64,6 +66,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const updated = [newExpense, ...expenses];
     setExpenses(updated);
     await storage.saveExpenses(updated);
+    syncHomeWidget();
     showToast('Expense added');
     return true;
   };
@@ -76,6 +79,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const updated = expenses.map(e => (e.id === id ? { ...e, ...data } : e));
     setExpenses(updated);
     await storage.saveExpenses(updated);
+    syncHomeWidget();
     showToast('Expense updated');
     return true;
   };
@@ -84,6 +88,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const updated = expenses.filter(e => e.id !== id);
     setExpenses(updated);
     await storage.saveExpenses(updated);
+    syncHomeWidget();
     showToast('Expense deleted');
     return true;
   };
@@ -91,6 +96,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const updateBudgets = async (newBudgets: Budget): Promise<void> => {
     setBudgets(newBudgets);
     await storage.saveBudgets(newBudgets);
+    syncHomeWidget();
     showToast('Budgets saved');
   };
 
@@ -104,6 +110,7 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setExpenses([]);
     setBudgets({ overall: 0, categories: {} });
     await storage.clearAll();
+    syncHomeWidget();
     showToast('All data cleared');
   };
 

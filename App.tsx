@@ -19,6 +19,7 @@ import { Expense, ScreenType } from './src/types';
 const MainApp: React.FC = () => {
   const { isDark, editingExpense, setEditingExpense } = useExpenses();
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('home');
+  const [historyMonthFilter, setHistoryMonthFilter] = useState<string | null>(null);
 
   const theme = isDark ? COLORS.dark : COLORS.light;
 
@@ -49,12 +50,23 @@ const MainApp: React.FC = () => {
     setCurrentScreen('home');
   };
 
+  const handleViewMonthHistory = (month: string) => {
+    setHistoryMonthFilter(month);
+    setCurrentScreen('history');
+  };
+
   const renderScreen = () => {
     switch (currentScreen) {
       case 'home':
         return <HomeScreen onNavigate={setCurrentScreen} onEditExpense={handleEditExpense} />;
       case 'history':
-        return <HistoryScreen onEditExpense={handleEditExpense} />;
+        return (
+          <HistoryScreen
+            onEditExpense={handleEditExpense}
+            selectedMonth={historyMonthFilter}
+            onClearMonthFilter={() => setHistoryMonthFilter(null)}
+          />
+        );
       case 'add':
         return (
           <AddExpenseScreen
@@ -63,7 +75,7 @@ const MainApp: React.FC = () => {
           />
         );
       case 'reports':
-        return <ReportsScreen />;
+        return <ReportsScreen onViewMonthHistory={handleViewMonthHistory} />;
       case 'budgets':
         return <BudgetsScreen />;
       case 'settings':
@@ -83,6 +95,9 @@ const MainApp: React.FC = () => {
         onNavigate={screen => {
           if (screen === 'add') {
             setEditingExpense(null);
+          }
+          if (screen === 'history') {
+            setHistoryMonthFilter(null);
           }
           setCurrentScreen(screen);
         }}
